@@ -8,6 +8,7 @@ import sys
 import logging
 import argparse
 import configparser
+import re
 from github import Github
 
 # http://stackoverflow.com/questions/8299270/ultimate-answer-to-relative-python-imports
@@ -97,20 +98,18 @@ g = Github(GHC.config["api"]["github_key"])
 # # Github Enterprise with custom hostname
 # g = Github(base_url="https://{hostname}/api/v3", login_or_token="access_token")
 
-repositories = set()
+repositories = []
 # Then play with your Github objects:
 #
-print(f"Searching for repo to meet filter: {ARGS.repofilter}")
 if ARGS.organization:
     print(f"Searching organization:  {ARGS.organization}")
     for repo in g.get_organization(ARGS.organization).get_repos():
-        repositories.add(repo.name)
+        repositories.append(repo.name)
 
 else:
     for repo in g.get_user().get_repos():   
-        repositories.add(repo.name)
+        repositories.append(repo.name)
         #print(repo.name)
-
 
 
 # # Note: Gets rate limited and fails if too many hits
@@ -121,6 +120,12 @@ else:
 #     if rate_limit.search.remaining == 0:
 #         print('WARNING: Rate limit on searching was reached.  Results are incomplete.')
 #         break
- 
-for repo in sorted(repositories):
+
+
+print(f"Searching for repo to meet regexp filter: {ARGS.repofilter}")
+# Simple match
+prog = re.compile(ARGS.repofilter)
+repositoriesfiltered = list(filter(prog.match, repositories))
+
+for repo in sorted(repositoriesfiltered):
     print(repo)

@@ -84,7 +84,7 @@ PARSER.add_argument('repofilter',#required!
                     help='Match criteria for repos')
 PARSER.add_argument('-c', '--configfile',
                     help='configuration file location (override)')
-PARSER.add_argument('-O', '--organization',
+PARSER.add_argument('-O', '--organization', 
                     help='What organization to find repos from')
 
 ARGS = PARSER.parse_args()
@@ -97,6 +97,30 @@ g = Github(GHC.config["api"]["github_key"])
 # # Github Enterprise with custom hostname
 # g = Github(base_url="https://{hostname}/api/v3", login_or_token="access_token")
 
+repositories = set()
 # Then play with your Github objects:
-for repo in g.get_user().get_repos():
-    print(repo.name)
+#
+print(f"Searching for repo to meet filter: {ARGS.repofilter}")
+if ARGS.organization:
+    print(f"Searching organization:  {ARGS.organization}")
+    for repo in g.get_organization(ARGS.organization).get_repos():
+        repositories.add(repo.name)
+
+else:
+    for repo in g.get_user().get_repos():   
+        repositories.add(repo.name)
+        #print(repo.name)
+
+
+
+# # Note: Gets rate limited and fails if too many hits
+# content_files = g.search_code(query=ARGS.repofilter)
+# for content in content_files:
+#     repositories.add(content.repository.full_name)
+#     rate_limit = g.get_rate_limit()
+#     if rate_limit.search.remaining == 0:
+#         print('WARNING: Rate limit on searching was reached.  Results are incomplete.')
+#         break
+ 
+for repo in sorted(repositories):
+    print(repo)
